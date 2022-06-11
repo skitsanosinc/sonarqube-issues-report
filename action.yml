@@ -31,7 +31,6 @@ runs:
       with:
         script: |          
           const sonarUrl = new (require('url')).URL('${{inputs.SONAR_HOST_URL}}');
-          console.log(sonarUrl);
           return {protocol: sonarUrl.protocol, host:sonarUrl.host}
 
     - shell: bash
