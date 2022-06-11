@@ -28,7 +28,7 @@ jobs:
     name: Generate Report
     runs-on: ubuntu-latest
     steps:
-      - uses: skitsanosinc/sonarqube-qualitygate-generate-report@main
+      - uses: skitsanosinc/sonarqube-issues-report@main
         id: report-generator
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
