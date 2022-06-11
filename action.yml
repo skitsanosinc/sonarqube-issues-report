@@ -28,9 +28,10 @@ runs:
 
     - uses: actions/github-script@v6
       id: urlParser
-      script: |
-        const sonarUrl = new (require('url')).URL('${{inputs.SONAR_HOST_URL}}');
-        return sonarUrl;
+      with:
+        script: |
+          const sonarUrl = new (require('url')).URL('${{inputs.SONAR_HOST_URL}}');
+          return sonarUrl;
 
     - shell: bash
       run: |
