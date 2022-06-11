@@ -29,13 +29,12 @@ runs:
     - uses: actions/github-script@v6
       id: urlParser
       with:
-        script: |
-          const sonarUrl = new (require('url')).URL('${{inputs.SONAR_HOST_URL}}');
-          return sonarUrl;
+        script: |          
+          return new (require('url')).URL('${{inputs.SONAR_HOST_URL}}');
 
     - shell: bash
       run: |
-        echo 'protocol={{steps.urlParser.outputs.result.protocol}}'
+        echo 'protocol=${{steps.urlParser.outputs.result.protocol}}'
         curl "${{steps.urlParser.outputs.result.protocol}}//${{ inputs.SONAR_TOKEN }}:@${{steps.urlParser.outputs.result.host}}/api/issues/search?componentKeys=${{inputs.SONAR_PROJECT}}&resolved=no" | jq '.issues[] | {key, message, severity, component, textRange}' | jq -s '{issues: ., repo: "${{github.repository}}", pr: "${{github.event.number}}", project: "${{inputs.SONAR_PROJECT}}"}' >report.json
         RUN_ID=$(curl -H "Content-Type: application/json" --data @report.json "https://sonarqube-reporting.netlify.app/api/quality-gate" | jq -r '.result._key')
         echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
