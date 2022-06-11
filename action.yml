@@ -18,6 +18,15 @@ inputs:
     required: true
     description: GitHub Token
 
+outputs:
+  RUN_ID:
+    value: ''
+    description: Report unique ID
+
+  PREVIEW_URL:
+    value: ''
+    description: URL to preview the report
+
 runs:
   using: composite
   steps:
@@ -37,6 +46,9 @@ runs:
       run: |
         curl "${{ fromJson(steps.urlParser.outputs.result).protocol }}//${{ inputs.SONAR_TOKEN }}:@${{ fromJson(steps.urlParser.outputs.result).host }}/api/issues/search?componentKeys=${{inputs.SONAR_PROJECT}}&resolved=no" | jq '.issues[] | {key, message, severity, component, textRange}' | jq -s '{issues: ., repo: "${{github.repository}}", pr: "${{github.event.number}}", project: "${{inputs.SONAR_PROJECT}}"}' >report.json
         RUN_ID=$(curl -H "Content-Type: application/json" --data @report.json "https://sonarqube-reporting.netlify.app/api/quality-gate" | jq -r '.result._key')
+        
         echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
+        echo "PREVIEW_URL=https://sonarqube-reporting.netlify.app/quality-gate/$RUN_ID" >> $GITHUB_ENV
+        
         echo "::set-output name=RUN_ID::$RUN_ID"
         echo "::set-output name=PREVIEW_URL::https://sonarqube-reporting.netlify.app/quality-gate/$RUN_ID"
