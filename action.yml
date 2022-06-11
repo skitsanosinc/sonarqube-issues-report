@@ -30,7 +30,9 @@ runs:
       id: urlParser
       with:
         script: |          
-          return new (require('url')).URL('${{inputs.SONAR_HOST_URL}}');
+          const sonarUrl = new (require('url')).URL('${{inputs.SONAR_HOST_URL}}');
+          console.log(spnarUrl);
+          return {protocol: sonarUrl.protocol, host:sonarUrl.host}
 
     - shell: bash
       run: |
