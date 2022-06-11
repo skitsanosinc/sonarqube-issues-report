@@ -31,12 +31,12 @@ runs:
       with:
         script: |          
           const sonarUrl = new (require('url')).URL('${{inputs.SONAR_HOST_URL}}');
-          return {protocol: sonarUrl.protocol, host: sonarUrl.host}
+          return {protocol: sonarUrl.protocol, hostname: sonarUrl.host}
 
     - shell: bash
       run: |     
-        echo 'Connecting on ${{ steps.urlParser.outputs.result.host }} ...'
-        curl "${{ steps.urlParser.outputs.result.protocol }}//${{ inputs.SONAR_TOKEN }}:@${{ steps.urlParser.outputs.result.host }}/api/issues/search?componentKeys=${{inputs.SONAR_PROJECT}}&resolved=no" | jq '.issues[] | {key, message, severity, component, textRange}' | jq -s '{issues: ., repo: "${{github.repository}}", pr: "${{github.event.number}}", project: "${{inputs.SONAR_PROJECT}}"}' >report.json
+        echo 'Connecting on ${{ steps.urlParser.outputs.result.hostname }} ...'
+        curl "${{ steps.urlParser.outputs.result.protocol }}//${{ inputs.SONAR_TOKEN }}:@${{ steps.urlParser.outputs.result.hostname }}/api/issues/search?componentKeys=${{inputs.SONAR_PROJECT}}&resolved=no" | jq '.issues[] | {key, message, severity, component, textRange}' | jq -s '{issues: ., repo: "${{github.repository}}", pr: "${{github.event.number}}", project: "${{inputs.SONAR_PROJECT}}"}' >report.json
         RUN_ID=$(curl -H "Content-Type: application/json" --data @report.json "https://sonarqube-reporting.netlify.app/api/quality-gate" | jq -r '.result._key')
         echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
 
