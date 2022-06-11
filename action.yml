@@ -1,0 +1,42 @@
+name: SonarQube Quality Gate Report Generator
+description: Generates report out of SonarQube QualityGate data
+
+inputs:
+  SONAR_TOKEN:
+    required: true
+    description: SonarQube token
+
+  SONAR_HOST:
+    required: true
+    description: SonarQube host
+
+  SONAR_PROJECT:
+    required: true
+    description: SonarQube project name
+
+  GITHUB_TOKEN:
+    required: true
+    description: GitHub Token
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      name: Install jq
+      run: |
+        sudo apt-get -qq install jq
+
+    - shell: bash
+      run: |
+        curl "http://${{ inputs.SONAR_TOKEN }}:@${{inputs.SONAR_HOST_URL}}/api/issues/search?componentKeys=${{inputs.SONAR_PROJECT}}&resolved=no" | jq '.issues[] | {key, message, severity, component, textRange}' | jq -s '{issues: ., repo: "${{github.repository}}", pr: "${{github.event.number}}", project: "${{inputs.SONAR_PROJECT}}"}' >report.json
+        RUN_ID=$(curl -H "Content-Type: application/json" --data @report.json "https://sonarqube-reporting.netlify.app/api/quality-gate" | jq -r '.result._key')
+        echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
+
+    - name: Post comment if in PR
+      if: github.event.number
+      uses: mshick/add-pr-comment@v1
+      with:
+        message: |
+          SonarQube Quality Gate reported code issues and you can see them on https://sonarqube-reporting.netlify.app/quality-gate/${{env.RUN_ID}}
+        repo-token: ${{ inputs.GITHUB_TOKEN }}
+        repo-token-user-login: 'sonar[bot]'
